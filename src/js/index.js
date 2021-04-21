@@ -1,10 +1,16 @@
 import { $ } from "./selector.js";
+const isGo = () => {
+  const randomNumber = Math.floor(Math.random() * 10);
+  return randomNumber >= 4;
+};
 
 function App($app) {
   this.state = {
-    racingCarNames: [],
-    tryCount: null,
-    isInputDone: false,
+    // racingCarNames: [],
+    // tryCount: null,
+    racingCarNames: ["a", "b"],
+    tryCount: 10,
+    isInputDone: true,
   };
 
   const inputInit = new InputInit({
@@ -13,12 +19,10 @@ function App($app) {
       racingCarNames: this.state.racingCarNames,
       tryCount: this.state.tryCount,
     },
-    onSubmit: ({ value, isInputDone = false }) => {
-      console.log(value);
+    onSubmit: (value) => {
       this.setState({
         ...this.state,
         ...value,
-        ...isInputDone,
       });
     },
   });
@@ -37,6 +41,11 @@ function App($app) {
     inputInit.setState({
       racingCarNames: this.state.racingCarNames,
       tryCount: this.state.tryCount,
+    });
+    road.setState({
+      racingCarNames: this.state.racingCarNames,
+      tryCount: this.state.tryCount,
+      isInputDone: this.state.isInputDone,
     });
   };
 
@@ -107,6 +116,7 @@ function InputInit({ $app, initialState, onSubmit }) {
       } else {
         value = {
           tryCount: Number(e.target.value),
+          isInputDone: true,
         };
       }
       this.onSubmit(value);
@@ -126,9 +136,10 @@ function InputInit({ $app, initialState, onSubmit }) {
       } else {
         value = {
           tryCount: Number(e.target.previousElementSibling.value),
+          isInputDone: true,
         };
       }
-      this.onSubmit({ value, isInputDone: true });
+      this.onSubmit(value);
     }
   });
 
@@ -139,6 +150,7 @@ function RacingRoad({ $app, initialState }) {
   this.$target = document.createElement("section");
   this.$target.className = "d-flex justify-center mt-5";
   $app.appendChild(this.$target);
+
   this.state = initialState;
 
   this.setState = (nextState) => {
@@ -146,21 +158,59 @@ function RacingRoad({ $app, initialState }) {
     this.render();
   };
 
-  console.log(this.state);
-
   this.render = () => {
-    this.$target.innerHTML = `a`;
+    this.$target.innerHTML = `<div class="mt-4 d-flex"></div>`;
   };
 
   this.render();
+
+  this.state.racingCarNames.forEach((name) => {
+    new Car({
+      $app: this.$target,
+      initialState: {
+        name,
+        count: this.state.tryCount,
+      },
+    });
+  });
 }
 
-function car({ $app, initialState }) {
-  // this.state = initialState
-  // this.setState = (nextState) => {
-  //   this.state = nextState
-  //   this.render();
-  // }
+function Car({ $app, initialState }) {
+  this.$target = document.createElement("div");
+  this.$target.className = "mr-2";
+  $app.appendChild(this.$target);
+  const spinner = `<div class="d-flex justify-center mt-3">
+  <div class="relative spinner-container">
+    <span class="material spinner"></span>
+  </div>
+</div>`;
+  const forward = `<div class="forward-icon mt-2">⬇️️</div>`;
+  this.state = { ...initialState, racingProcess: forward };
+  this.setState = (nextState) => {
+    this.state = nextState;
+    this.render();
+  };
+
+  const timerCount = setInterval(() => {
+    if (this.state.count === 0) {
+      clearInterval(timerCount);
+      return;
+    }
+
+    this.setState({
+      ...this.state,
+      racingProcess: this.state.racingProcess + (!isGo() ? "" : forward),
+      count: --this.state.count,
+    });
+  }, 1000);
+
+  this.render = () => {
+    this.$target.innerHTML = `
+      <div class="car-player">${this.state.name}</div>
+      ${this.state.racingProcess}
+      ${this.state.count !== 0 ? spinner : ""}${this.state.count}`;
+  };
+  this.render();
 }
 
 new App($("#app"));
